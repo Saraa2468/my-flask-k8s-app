@@ -1,0 +1,24 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.Ss2468101314! }}" | docker login -u "${{ secrets.sarasalah24 }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.sarasalah24 }}/my-app:latest .
+
+    - name: Push Docker image
+      run: docker push ${{ secrets.sarasalah24 }}/my-app:latest
