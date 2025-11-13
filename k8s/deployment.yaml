@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: my-app:latest   
+        image: sarasalah24/my-app:latest   
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
