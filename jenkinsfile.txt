@@ -1,0 +1,48 @@
+pipeline {
+  agent any
+  environment {
+    REGISTRY = "myusername/my-app"
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
+    KUBECONFIG_CRED = 'kubeconfig-cred' // Jenkins credentials id
+    DOCKER_CRED = 'dockerhub-cred'
+  }
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+    stage('Build') {
+      steps {
+        sh "docker build -t ${REGISTRY}:${IMAGE_TAG} ."
+      }
+    }
+    stage('Login & Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: "${DOCKER_CRED}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+          sh "docker push ${REGISTRY}:${IMAGE_TAG}"
+        }
+      }
+    }
+    stage('Deploy to Kubernetes') {
+      steps {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CRED}", variable: 'KUBECONFIG_FILE')]) {
+          sh 'export KUBECONFIG=${KUBECONFIG_FILE}'
+          sh """
+            kubectl set image deployment/my-app my-app=${REGISTRY}:${IMAGE_TAG} -n default || \
+            kubectl apply -f k8s/
+          """
+        }
+      }
+    }
+    stage('Smoke Test') {
+      steps {
+        sh "sleep 5"
+        sh "curl -f http://my-app.example.com/ || exit 1"
+      }
+    }
+  }
+  post {
+    failure { echo "Build or deploy failed" }
+    success { echo "Deployed ${REGISTRY}:${IMAGE_TAG}" }
+  }
+}
