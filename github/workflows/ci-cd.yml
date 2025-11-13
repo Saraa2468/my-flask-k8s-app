@@ -22,3 +22,15 @@ jobs:
 
     - name: Push Docker image
       run: docker push ${{ secrets.sarasalah24 }}/my-app:latest
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with: 
+        version: 'latest'
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+        kubectl apply -f k8s/ingress.yaml
+        
